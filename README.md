@@ -43,7 +43,7 @@ PORT=3002
 #### Get Your Webhook Secret:
 1. Go to https://dashboard.stripe.com/test/webhooks
 2. Click "+ Add endpoint"
-3. Endpoint URL: `http://localhost:3002/api/webhook`
+3. Endpoint URL: `https://tryinterview-backend.vercel.app/api/webhook`
 4. Select events: `checkout.session.completed`, `customer.subscription.*`, `invoice.*`
 5. Copy the "Signing secret" (starts with `whsec_`)
 6. Add it to `.env.local`
@@ -54,13 +54,13 @@ PORT=3002
 npm run dev
 ```
 
-The API will run on http://localhost:3002
+The API will run on https://tryinterview-backend.vercel.app
 
 ### 4. Test API Endpoints
 
 **Create Checkout Session:**
 ```bash
-curl -X POST http://localhost:3002/api/create-checkout-session \
+curl -X POST https://tryinterview-backend.vercel.app/api/create-checkout-session \
   -H "Content-Type: application/json" \
   -d '{
     "priceId": "price_xxxxx",
@@ -138,7 +138,7 @@ Update your frontend Stripe service to use this backend:
 // src/services/stripeService.js
 export const createCheckoutSession = async (priceId, user) => {
   try {
-    const response = await fetch('http://localhost:3002/api/create-checkout-session', {
+    const response = await fetch('https://tryinterview-backend.vercel.app/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
