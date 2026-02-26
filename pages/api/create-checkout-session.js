@@ -45,6 +45,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Email is required' });
     }
 
+    // Validate that it's a price ID (starts with 'price_'), not a product ID
+    if (priceId.startsWith('prod_')) {
+      return res.status(400).json({ 
+        error: 'Invalid Price ID',
+        message: 'You provided a Product ID (prod_). Please provide a Price ID (price_) instead. In Stripe Dashboard, go to your product and copy the Price ID from the pricing section.'
+      });
+    }
+
+    if (!priceId.startsWith('price_')) {
+      return res.status(400).json({ 
+        error: 'Invalid Price ID',
+        message: 'Price ID must start with "price_". Please check your Stripe Dashboard.'
+      });
+    }
+
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
