@@ -140,6 +140,31 @@ export default async function handler(req, res) {
         console.log('👤 Customer updated:', updatedCustomer.id);
         break;
 
+      case 'checkout.session.expired':
+        const expiredSession = event.data.object;
+        console.log('⏱️ Checkout session expired:', expiredSession.id);
+        console.log('   Customer email:', expiredSession.customer_email);
+        console.log('   Created:', new Date(expiredSession.created * 1000).toISOString());
+        // Optional: Track abandoned checkouts for follow-up
+        break;
+
+      case 'payment_intent.succeeded':
+        const successfulIntent = event.data.object;
+        console.log('💳 Payment intent succeeded:', successfulIntent.id);
+        console.log('   Amount:', successfulIntent.amount / 100, successfulIntent.currency.toUpperCase());
+        console.log('   Customer:', successfulIntent.customer);
+        // This confirms delayed payment methods succeeded
+        break;
+
+      case 'payment_intent.payment_failed':
+        const failedIntent = event.data.object;
+        console.log('❌ Payment intent failed:', failedIntent.id);
+        console.log('   Amount:', failedIntent.amount / 100, failedIntent.currency.toUpperCase());
+        console.log('   Customer:', failedIntent.customer);
+        console.log('   Error:', failedIntent.last_payment_error?.message || 'Unknown error');
+        // Handle failed delayed payment
+        break;
+
       default:
         console.log(`ℹ️  Unhandled event type: ${event.type}`);
     }
