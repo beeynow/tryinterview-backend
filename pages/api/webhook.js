@@ -1,5 +1,9 @@
 import Stripe from 'stripe';
 import { buffer } from 'micro';
+import {
+  upsertSubscription,
+  updateSubscription
+} from '../../lib/firestoreHelpers.js';
 const subscriptionStore = require('../../lib/subscriptionStore');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -54,6 +58,41 @@ export default async function handler(req, res) {
           });
           console.log('   💾 Customer saved to store');
         }
+
+        // Save to Firestore
+        try {
+          if (session.subscription) {
+            const subscription = await stripe.subscriptions.retrieve(session.subscription, {
+              expand: ['items.data.price']
+            });
+            
+            const priceId = subscription.items.data[0]?.price.id;
+            let planName = 'Unknown Plan';
+            if (priceId === process.env.STRIPE_PRICE_STARTER) planName = 'Starter';
+            else if (priceId === process.env.STRIPE_PRICE_PROFESSIONAL) planName = 'Professional';
+            else if (priceId === process.env.STRIPE_PRICE_PREMIUM) planName = 'Premium';
+            else if (priceId === process.env.STRIPE_PRICE_ENTERPRISE) planName = 'Enterprise';
+
+            const webhookUserId = session.client_reference_id || session.metadata?.userId;
+            const saved = await upsertSubscription({
+              userId: webhookUserId,
+              customerId: session.customer,
+              subscriptionId: subscription.id,
+              priceId: priceId,
+              planName: planName,
+              status: subscription.status,
+              amount: subscription.items.data[0]?.price.unit_amount / 100,
+              currency: subscription.items.data[0]?.price.currency?.toUpperCase(),
+              interval: subscription.items.data[0]?.price.recurring?.interval,
+              currentPeriodStart: new Date(subscription.current_period_start * 1000),
+              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              cancelAtPeriodEnd: subscription.cancel_at_period_end
+            });
+            console.log('   💾 Subscription saved to Firestore:', planName, '| userId:', webhookUserId, '| Doc ID:', saved?.id);
+          }
+        } catch (firestoreError) {
+          console.error('Firestore save error:', firestoreError.message);
+        }
         break;
 
       case 'customer.subscription.created':
@@ -81,8 +120,8 @@ export default async function handler(req, res) {
         console.log('🔄 Subscription updated:', updatedSubscription.id);
         console.log('   New status:', updatedSubscription.status);
         console.log('   Cancel at period end:', updatedSubscription.cancel_at_period_end);
-        
-        // Update subscription
+
+        // Update in-memory store
         const existingSub = subscriptionStore.getSubscription(updatedSubscription.id);
         if (existingSub) {
           subscriptionStore.saveSubscription(updatedSubscription.id, {
@@ -95,14 +134,39 @@ export default async function handler(req, res) {
           });
           console.log('   💾 Subscription updated in store');
         }
+
+        // Update Firestore
+        try {
+          const updPriceId = updatedSubscription.items.data[0]?.price.id;
+          let updPlanName = 'Unknown Plan';
+          if (updPriceId === process.env.STRIPE_PRICE_STARTER) updPlanName = 'Starter';
+          else if (updPriceId === process.env.STRIPE_PRICE_PROFESSIONAL) updPlanName = 'Professional';
+          else if (updPriceId === process.env.STRIPE_PRICE_PREMIUM) updPlanName = 'Premium';
+          else if (updPriceId === process.env.STRIPE_PRICE_ENTERPRISE) updPlanName = 'Enterprise';
+
+          await updateSubscription(updatedSubscription.id, {
+            status: updatedSubscription.status,
+            priceId: updPriceId,
+            planName: updPlanName,
+            amount: updatedSubscription.items.data[0]?.price.unit_amount / 100,
+            currency: updatedSubscription.items.data[0]?.price.currency?.toUpperCase(),
+            interval: updatedSubscription.items.data[0]?.price.recurring?.interval,
+            currentPeriodStart: new Date(updatedSubscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
+            cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end
+          });
+          console.log('   💾 Subscription updated in Firestore:', updPlanName, updatedSubscription.status);
+        } catch (firestoreError) {
+          console.error('Firestore update error:', firestoreError.message);
+        }
         break;
 
       case 'customer.subscription.deleted':
         const deletedSubscription = event.data.object;
         console.log('❌ Subscription deleted:', deletedSubscription.id);
         console.log('   Customer:', deletedSubscription.customer);
-        
-        // Update subscription status
+
+        // Update in-memory store
         const deletedSub = subscriptionStore.getSubscription(deletedSubscription.id);
         if (deletedSub) {
           subscriptionStore.saveSubscription(deletedSubscription.id, {
@@ -110,7 +174,18 @@ export default async function handler(req, res) {
             status: 'canceled',
             canceledAt: new Date().toISOString()
           });
-          console.log('   💾 Subscription marked as canceled');
+          console.log('   💾 Subscription marked as canceled in store');
+        }
+
+        // Update Firestore
+        try {
+          await updateSubscription(deletedSubscription.id, {
+            status: 'canceled',
+            canceledAt: new Date()
+          });
+          console.log('   💾 Subscription marked as canceled in Firestore');
+        } catch (firestoreError) {
+          console.error('Firestore cancel error:', firestoreError.message);
         }
         break;
 

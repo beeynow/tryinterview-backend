@@ -1,0 +1,176 @@
+2026-03-03T10:59:38: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:39: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:39: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:40: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:40: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:40: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:41: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:41: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:42: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:42: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:43: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:43: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:43: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:44: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:44: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:45: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T10:59:45: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+    at setupFsCheck (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-utils/filesystem.js:151:19)
+    at async initialize (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/router-server.js:64:23)
+    at async Server.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/next/dist/server/lib/start-server.js:249:36)
+2026-03-03T11:01:16: Error finding active subscription: Error: 16 UNAUTHENTICATED: Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at callErrorFromStatus (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/call.js:32:19)
+    at Object.onReceiveStatus (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/client.js:359:73)
+    at Object.onReceiveStatus (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:327:181)
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:84:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/client.js:342:32)
+    at ServiceClientImpl.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:242:33
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16
+    at Object.request (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)
+    at makeRequest (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/retry-request/index.js:159:28)
+    at retryRequest (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/retry-request/index.js:119:5)
+    at StreamProxy.setStream (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)
+    at StreamingApiCaller.call (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)
+Caused by: Error
+    at QueryUtil._getResponse (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)
+    at Query._getResponse (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)
+    at Query._get (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30
+    at NoopContextManager.with (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28) {
+  code: 16,
+  details: 'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.',
+  metadata: Metadata {
+    internalRepr: Map(4) {
+      'google.rpc.errorinfo-bin' => [Array],
+      'grpc-status-details-bin' => [Array],
+      'www-authenticate' => [Array],
+      'x-debug-tracking-id' => [Array]
+    },
+    opaqueData: Map(0) {},
+    options: {}
+  },
+  statusDetails: [
+    ErrorInfo {
+      metadata: [Object],
+      reason: 'ACCESS_TOKEN_EXPIRED',
+      domain: 'googleapis.com'
+    }
+  ],
+  reason: 'ACCESS_TOKEN_EXPIRED',
+  domain: 'googleapis.com',
+  errorInfoMetadata: {
+    method: 'google.firestore.v1.Firestore.RunQuery',
+    service: 'firestore.googleapis.com'
+  }
+}
+2026-03-03T11:01:16: ❌ Error checking subscription: Error: 16 UNAUTHENTICATED: Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at callErrorFromStatus (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/call.js:32:19)
+    at Object.onReceiveStatus (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/client.js:359:73)
+    at Object.onReceiveStatus (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:327:181)
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:84:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/client.js:342:32)
+    at ServiceClientImpl.<anonymous> (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:242:33
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16
+    at Object.request (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)
+    at makeRequest (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/retry-request/index.js:159:28)
+    at retryRequest (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/retry-request/index.js:119:5)
+    at StreamProxy.setStream (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)
+    at StreamingApiCaller.call (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)
+Caused by: Error
+    at QueryUtil._getResponse (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)
+    at Query._getResponse (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)
+    at Query._get (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43
+    at /home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30
+    at NoopContextManager.with (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (/home/muhammad/Tryinterview/tryinterview-backend/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28) {
+  code: 16,
+  details: 'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.',
+  metadata: Metadata {
+    internalRepr: Map(4) {
+      'google.rpc.errorinfo-bin' => [Array],
+      'grpc-status-details-bin' => [Array],
+      'www-authenticate' => [Array],
+      'x-debug-tracking-id' => [Array]
+    },
+    opaqueData: Map(0) {},
+    options: {}
+  },
+  statusDetails: [
+    ErrorInfo {
+      metadata: [Object],
+      reason: 'ACCESS_TOKEN_EXPIRED',
+      domain: 'googleapis.com'
+    }
+  ],
+  reason: 'ACCESS_TOKEN_EXPIRED',
+  domain: 'googleapis.com',
+  errorInfoMetadata: {
+    method: 'google.firestore.v1.Firestore.RunQuery',
+    service: 'firestore.googleapis.com'
+  }
+}
