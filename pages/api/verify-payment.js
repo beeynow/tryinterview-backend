@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import Cors from 'cors';
+const { createCors, runMiddleware, requireAuth } = require('../../lib/apiUtils');
 const {
   cancelOtherSubscriptions,
   upsertSubscription,
@@ -10,19 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-11-20.acacia',
 });
 
-const cors = Cors({
-  methods: ['GET', 'POST', 'OPTIONS'],
-  origin: '*',
-});
-
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) return reject(result);
-      return resolve(result);
-    });
-  });
-}
+const cors = createCors(['GET', 'POST', 'OPTIONS']);
 
 export default async function handler(req, res) {
   await runMiddleware(req, res, cors);
@@ -32,8 +20,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const authUser = await requireAuth(req, res);
+  if (!authUser) return;
+
   const sessionId = req.query.session_id || req.body?.session_id;
-  const userId = req.query.userId || req.body?.userId;
 
   if (!sessionId) return res.status(400).json({ error: 'session_id is required' });
 
@@ -63,7 +53,31 @@ export default async function handler(req, res) {
 
       const priceId = subscription.items.data[0]?.price.id;
       const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
-      const userIdFromSession = session.client_reference_id || userId;
+      const userIdFromSession =
+        session.client_reference_id ||
+        session.metadata?.userId ||
+        subscription.metadata?.userId;
+      const sessionEmail = session.customer_details?.email || session.customer_email || null;
+
+      if (userIdFromSession && userIdFromSession !== authUser.uid) {
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'This checkout session does not belong to the authenticated user.',
+        });
+      }
+
+      if (!userIdFromSession) {
+        if (!authUser.email || !sessionEmail || sessionEmail !== authUser.email) {
+          return res.status(403).json({
+            success: false,
+            error: 'Forbidden',
+            message: 'The checkout session could not be matched to the authenticated user.',
+          });
+        }
+      }
+
+      const trustedUserId = userIdFromSession || authUser.uid;
 
       let planName = 'Unknown Plan';
       if (priceId === process.env.STRIPE_PRICE_STARTER) planName = 'Starter';
@@ -74,7 +88,7 @@ export default async function handler(req, res) {
       subscriptionData = {
         subscriptionId: subscription.id,
         customerId,
-        userId: userIdFromSession,
+        userId: trustedUserId,
         status: subscription.status,
         priceId,
         planName,
@@ -86,13 +100,13 @@ export default async function handler(req, res) {
         interval: subscription.items.data[0]?.price.recurring?.interval,
       };
 
-      if (userIdFromSession) {
+      if (trustedUserId) {
         // Cancel any previous active subscriptions for this user
-        await cancelOtherSubscriptions(userIdFromSession, subscription.id);
+        await cancelOtherSubscriptions(trustedUserId, subscription.id);
 
         // Upsert new subscription to Firestore
         const savedSub = await upsertSubscription({
-          userId: userIdFromSession,
+          userId: trustedUserId,
           customerId,
           subscriptionId: subscription.id,
           priceId,
@@ -106,12 +120,12 @@ export default async function handler(req, res) {
           cancelAtPeriodEnd: subscription.cancel_at_period_end
         });
 
-        console.log('✅ Subscription saved to Firestore:', planName, 'for user:', userIdFromSession, '| Doc ID:', savedSub?.id);
+        console.log('✅ Subscription saved to Firestore:', planName, 'for user:', trustedUserId, '| Doc ID:', savedSub?.id);
 
         // Update user's stripeCustomerId
-        await updateUserCustomerId(userIdFromSession, customerId);
+        await updateUserCustomerId(trustedUserId, customerId);
       } else {
-        console.warn('⚠️ No userId found — subscription NOT saved to Firestore. session.client_reference_id:', session.client_reference_id, '| userId param:', userId);
+        console.warn('⚠️ No userId found — subscription NOT saved to Firestore. session.client_reference_id:', session.client_reference_id);
       }
     }
 

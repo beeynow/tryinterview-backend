@@ -1,28 +1,13 @@
 import Stripe from 'stripe';
-import Cors from 'cors';
+const { findUserById } = require('../../lib/firestoreHelpers');
+const { createCors, runMiddleware, requireAuth } = require('../../lib/apiUtils');
 
 // Initialize Stripe with secret key from environment
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-11-20.acacia',
 });
 
-// Initialize CORS middleware
-const cors = Cors({
-  methods: ['POST', 'GET', 'HEAD', 'OPTIONS'],
-  origin: '*',
-});
-
-// Helper method to wait for middleware
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
-    });
-  });
-}
+const cors = createCors(['POST', 'GET', 'HEAD', 'OPTIONS']);
 
 export default async function handler(req, res) {
   // Run CORS middleware
@@ -33,15 +18,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const authUser = await requireAuth(req, res);
+  if (!authUser) return;
+  const requestPriceId = req.body?.priceId;
+
   try {
-    const { priceId, userId, email } = req.body;
+    const { priceId } = req.body || {};
+    const userId = authUser.uid;
+    const email = authUser.email || req.body?.email;
+    const existingUser = await findUserById(userId);
 
     // Validate required fields
     if (!priceId) {
       return res.status(400).json({ error: 'Price ID is required' });
     }
 
-    if (!email) {
+    if (!existingUser?.customerId && !email) {
       return res.status(400).json({ error: 'Email is required' });
     }
 
@@ -60,8 +52,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const sessionPayload = {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
@@ -72,17 +63,25 @@ export default async function handler(req, res) {
       ],
       success_url: `${process.env.FRONTEND_URL || 'https://tryinterview.site'}?payment_success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL || 'https://tryinterview.site'}?payment_canceled=true`,
-      customer_email: email,
       client_reference_id: userId,
       metadata: {
-        userId: userId,
+        userId,
       },
       subscription_data: {
         metadata: {
-          userId: userId,
+          userId,
         },
       },
-    });
+    };
+
+    if (existingUser?.customerId) {
+      sessionPayload.customer = existingUser.customerId;
+    } else {
+      sessionPayload.customer_email = email;
+    }
+
+    // Create Checkout Session
+    const session = await stripe.checkout.sessions.create(sessionPayload);
 
     // Return the session ID
     return res.status(200).json({ 
@@ -95,9 +94,9 @@ export default async function handler(req, res) {
     console.error('Error details:', {
       message: error.message,
       stack: error.stack,
-      priceId: req.body.priceId,
-      userId: req.body.userId,
-      email: req.body.email
+      priceId: requestPriceId,
+      userId: authUser.uid,
+      email: authUser.email || req.body?.email
     });
     return res.status(500).json({ 
       error: 'Failed to create checkout session',

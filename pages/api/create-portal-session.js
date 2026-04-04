@@ -1,27 +1,12 @@
 import Stripe from 'stripe';
-import Cors from 'cors';
+const { findActiveSubscription, findUserById } = require('../../lib/firestoreHelpers');
+const { createCors, runMiddleware, requireAuth } = require('../../lib/apiUtils');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-11-20.acacia',
 });
 
-// Initialize CORS middleware
-const cors = Cors({
-  methods: ['POST', 'GET', 'HEAD', 'OPTIONS'],
-  origin: '*',
-});
-
-// Helper method to wait for middleware
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
-    });
-  });
-}
+const cors = createCors(['POST', 'GET', 'HEAD', 'OPTIONS']);
 
 export default async function handler(req, res) {
   // Run CORS middleware
@@ -31,11 +16,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const authUser = await requireAuth(req, res);
+  if (!authUser) return;
+
   try {
-    const { customerId } = req.body;
+    const subscription = await findActiveSubscription(authUser.uid);
+    const user = await findUserById(authUser.uid);
+    const customerId = subscription?.customerId || user?.customerId;
 
     if (!customerId) {
-      return res.status(400).json({ error: 'Customer ID is required' });
+      return res.status(404).json({ error: 'No active Stripe customer found for this user' });
     }
 
     // Create portal session

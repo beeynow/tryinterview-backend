@@ -1,27 +1,17 @@
-import Cors from 'cors';
 import Stripe from 'stripe';
-import {
+const {
   findActiveSubscription,
-  upsertSubscription
-} from '../../lib/firestoreHelpers.js';
+  findUserById,
+  upsertSubscription,
+  serializeDoc,
+} = require('../../lib/firestoreHelpers');
+const { createCors, runMiddleware, requireAuth } = require('../../lib/apiUtils');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-11-20.acacia',
 });
 
-const cors = Cors({
-  methods: ['GET', 'OPTIONS'],
-  origin: '*',
-});
-
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) return reject(result);
-      return resolve(result);
-    });
-  });
-}
+const cors = createCors(['GET', 'OPTIONS']);
 
 export default async function handler(req, res) {
   await runMiddleware(req, res, cors);
@@ -29,27 +19,34 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { userId } = req.query;
-
-  if (!userId) return res.status(400).json({ error: 'userId is required' });
+  const authUser = await requireAuth(req, res);
+  if (!authUser) return;
+  const userId = authUser.uid;
 
   try {
     console.log('🔍 Checking subscription for userId:', userId);
 
     // Find active subscription in Firestore
-    let subscription = await findActiveSubscription(userId);
+    let subscription = serializeDoc(await findActiveSubscription(userId));
+    const user = serializeDoc(await findUserById(userId));
 
     // If not in DB, check Stripe directly
     if (!subscription) {
       console.log('💡 Not in DB, checking Stripe directly...');
       try {
-        const customers = await stripe.customers.search({
-          query: `metadata[\'userId\']:\'${userId}\'`,
-          limit: 1
-        });
+        let customer = null;
 
-        if (customers.data.length > 0) {
-          const customer = customers.data[0];
+        if (user?.customerId) {
+          customer = await stripe.customers.retrieve(user.customerId);
+        } else if (authUser.email) {
+          const customers = await stripe.customers.list({
+            email: authUser.email,
+            limit: 1,
+          });
+          customer = customers.data[0] || null;
+        }
+
+        if (customer) {
           const subscriptions = await stripe.subscriptions.list({
             customer: customer.id,
             status: 'active',
@@ -68,7 +65,7 @@ export default async function handler(req, res) {
             else if (priceId === process.env.STRIPE_PRICE_ENTERPRISE) planName = 'Enterprise';
 
             // Save to Firestore
-            subscription = await upsertSubscription({
+            subscription = serializeDoc(await upsertSubscription({
               userId,
               customerId: customer.id,
               subscriptionId: stripeSub.id,
@@ -81,7 +78,7 @@ export default async function handler(req, res) {
               currentPeriodStart: new Date(stripeSub.current_period_start * 1000),
               currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
               cancelAtPeriodEnd: stripeSub.cancel_at_period_end
-            });
+            }));
 
             console.log('✅ Subscription synced from Stripe to Firestore:', planName);
           }

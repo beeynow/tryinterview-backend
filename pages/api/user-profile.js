@@ -1,37 +1,33 @@
-import Cors from 'cors';
-import {
+const {
   findUserById,
   findActiveSubscription,
-  upsertUser
-} from '../../lib/firestoreHelpers.js';
+  upsertUser,
+  serializeDoc,
+} = require('../../lib/firestoreHelpers');
+const {
+  createCors,
+  runMiddleware,
+  requireAuth,
+  getIdentityFromToken,
+} = require('../../lib/apiUtils');
 
-const cors = Cors({
-  methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
-  origin: '*',
-});
-
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) return reject(result);
-      return resolve(result);
-    });
-  });
-}
+const cors = createCors(['GET', 'POST', 'PUT', 'OPTIONS']);
 
 export default async function handler(req, res) {
   await runMiddleware(req, res, cors);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+  const authUser = await requireAuth(req, res);
+  if (!authUser) return;
 
-  const { userId } = req.query;
-  if (!userId) return res.status(400).json({ error: 'userId is required' });
+  const { userId, email: tokenEmail, name: tokenName, photoURL: tokenPhotoURL, provider: tokenProvider } =
+    getIdentityFromToken(authUser);
 
   // GET - Get user profile
   if (req.method === 'GET') {
     try {
-      const user = await findUserById(userId);
-      const subscription = await findActiveSubscription(userId);
+      const user = serializeDoc(await findUserById(userId));
+      const subscription = serializeDoc(await findActiveSubscription(userId));
 
       if (!user) {
         return res.json({ exists: false });
@@ -50,6 +46,10 @@ export default async function handler(req, res) {
           experience: user.experience,
           skills: user.skills,
           goals: user.goals,
+          interviewType: user.interviewType,
+          availability: user.availability,
+          notifications: user.notifications,
+          customerId: user.customerId,
           createdAt: user.createdAt,
           lastLoginAt: user.lastLoginAt,
         },
@@ -74,28 +74,49 @@ export default async function handler(req, res) {
   // POST/PUT - Create or update user profile
   if (req.method === 'POST' || req.method === 'PUT') {
     try {
-      const { email, name, photoURL, provider, onboarded, jobTitle, experience, skills, goals } = req.body;
+      const existingUser = await findUserById(userId);
+      const {
+        email,
+        name,
+        photoURL,
+        provider,
+        onboarded,
+        jobTitle,
+        experience,
+        skills,
+        goals,
+        interviewType,
+        availability,
+        notifications,
+      } = req.body || {};
 
       const userData = {
         userId,
-        lastLoginAt: new Date()
+        lastLoginAt: new Date(),
       };
 
       // Only add defined fields
-      if (email) userData.email = email;
-      if (name) userData.name = name;
-      if (photoURL) userData.photoURL = photoURL;
-      if (provider) userData.provider = provider;
+      if (email || tokenEmail) userData.email = email || tokenEmail;
+      if (name !== undefined && name !== null && name !== '') {
+        userData.name = name;
+      } else if (!existingUser?.name && tokenName) {
+        userData.name = tokenName;
+      }
+      if (photoURL || tokenPhotoURL) userData.photoURL = photoURL || tokenPhotoURL;
+      if (provider || tokenProvider) userData.provider = provider || tokenProvider;
       if (onboarded !== undefined) userData.onboarded = onboarded;
       if (jobTitle) userData.jobTitle = jobTitle;
       if (experience) userData.experience = experience;
       if (skills) userData.skills = skills;
       if (goals) userData.goals = goals;
+      if (interviewType) userData.interviewType = interviewType;
+      if (availability) userData.availability = availability;
+      if (notifications !== undefined) userData.notifications = notifications;
 
       const user = await upsertUser(userData);
 
       console.log('✅ User profile saved to Firestore:', userId);
-      return res.json({ success: true, user });
+      return res.json({ success: true, user: serializeDoc(user) });
     } catch (error) {
       console.error('Error saving profile:', error);
       return res.status(500).json({ error: 'Failed to save profile' });
