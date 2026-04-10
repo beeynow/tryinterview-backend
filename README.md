@@ -1,214 +1,64 @@
-# TryInterview Backend API
+# TryInterview Backend
 
-Next.js backend API for handling Stripe payments and webhooks for TryInterview.
+Production-oriented Next.js API for TryInterview with:
 
-## Features
+- Firebase auth verification
+- Secure server session cookies
+- Stripe billing and webhook handling
+- Neon/PostgreSQL schema and migrations
+- Fallback compatibility with the existing Firestore-backed flow while the database is being rolled out
 
-- ✅ Stripe Checkout Session creation
-- ✅ Customer Portal for subscription management
-- ✅ Webhook handling for subscription events
-- ✅ CORS configured for frontend integration
-- ✅ TypeScript-ready
+## Database foundation
 
-## Setup Instructions
+The backend now includes a normalized Neon/PostgreSQL schema for:
 
-### 1. Install Dependencies
+- users and profile data
+- secure auth sessions
+- subscriptions and webhook events
+- interview blueprints, interviews, feedback, and history
+- question bank categories and items
+- resume uploads and resume analyses
+- achievements, certificates, and progress snapshots
+- user settings
+
+Migration files live in [`db/migrations/001_platform_foundation.sql`](/home/muhammad/Tryinterview/tryinterview-backend/db/migrations/001_platform_foundation.sql).
+
+## Environment
+
+Copy [`.env.example`](/home/muhammad/Tryinterview/tryinterview-backend/.env.example) to `.env.local` and configure:
+
+- `DATABASE_URL` for Neon/Postgres
+- Stripe secrets and price IDs
+- Firebase Admin credentials
+- frontend URL and cookie settings
+
+## Migrations
+
+When network access is available and dependencies are installed:
 
 ```bash
 npm install
+npm run db:migrate
 ```
 
-### 2. Configure Environment Variables
+## Session model
 
-Copy `.env.example` to `.env.local`:
+The backend supports two auth paths:
 
-```bash
-cp .env.example .env.local
-```
+1. Firebase bearer tokens for existing frontend API calls.
+2. Firebase session cookies plus an app session cookie for hardened browser sessions.
 
-Update `.env.local` with your Stripe credentials:
+New session endpoints:
 
-```env
-STRIPE_SECRET_KEY=sk_test_your_actual_secret_key
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-FRONTEND_URL=http://localhost:3001
-PORT=3002
-```
+- `GET /api/auth/session/csrf`
+- `POST /api/auth/session/login`
+- `POST /api/auth/session/logout`
+- `GET /api/auth/session/me`
 
-#### Get Your Stripe Secret Key:
-1. Go to https://dashboard.stripe.com/test/apikeys
-2. Copy the "Secret key" (starts with `sk_test_`)
-3. Add it to `.env.local`
+## Stripe hardening
 
-#### Get Your Webhook Secret:
-1. Go to https://dashboard.stripe.com/test/webhooks
-2. Click "+ Add endpoint"
-3. Endpoint URL: `https://tryinterview-backend.vercel.app/api/webhook`
-4. Select events: `checkout.session.completed`, `customer.subscription.*`, `invoice.*`
-5. Copy the "Signing secret" (starts with `whsec_`)
-6. Add it to `.env.local`
+Stripe webhooks now record event IDs in the database so duplicate deliveries do not double-apply subscription state.
 
-### 3. Run Development Server
+## Neon CLI note
 
-```bash
-npm run dev
-```
-
-The API will run on https://tryinterview-backend.vercel.app
-
-### 4. Test API Endpoints
-
-**Create Checkout Session:**
-```bash
-curl -X POST https://tryinterview-backend.vercel.app/api/create-checkout-session \
-  -H "Content-Type: application/json" \
-  -d '{
-    "priceId": "price_xxxxx",
-    "userId": "user123",
-    "email": "test@example.com"
-  }'
-```
-
-**Response:**
-```json
-{
-  "sessionId": "cs_test_xxxxx",
-  "url": "https://checkout.stripe.com/c/pay/cs_test_xxxxx"
-}
-```
-
-## API Endpoints
-
-### POST /api/create-checkout-session
-
-Creates a Stripe Checkout session for subscription.
-
-**Request Body:**
-```json
-{
-  "priceId": "price_xxxxx",
-  "userId": "user123",
-  "email": "user@example.com"
-}
-```
-
-**Response:**
-```json
-{
-  "sessionId": "cs_test_xxxxx",
-  "url": "https://checkout.stripe.com/c/pay/cs_test_xxxxx"
-}
-```
-
-### POST /api/create-portal-session
-
-Creates a Stripe Customer Portal session.
-
-**Request Body:**
-```json
-{
-  "customerId": "cus_xxxxx"
-}
-```
-
-**Response:**
-```json
-{
-  "url": "https://billing.stripe.com/session/xxxxx"
-}
-```
-
-### POST /api/webhook
-
-Handles Stripe webhook events.
-
-**Events Handled:**
-- `checkout.session.completed`
-- `customer.subscription.created`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
-- `invoice.payment_succeeded`
-- `invoice.payment_failed`
-
-## Frontend Integration
-
-Update your frontend Stripe service to use this backend:
-
-```javascript
-// src/services/stripeService.js
-export const createCheckoutSession = async (priceId, user) => {
-  try {
-    const response = await fetch('https://tryinterview-backend.vercel.app/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        priceId,
-        userId: user.uid,
-        email: user.email
-      }),
-    });
-
-    const { sessionId, url } = await response.json();
-    
-    // Redirect to Stripe Checkout
-    window.location.href = url;
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    throw error;
-  }
-};
-```
-
-## Deployment
-
-### Vercel (Recommended)
-
-1. Push code to GitHub
-2. Import project in Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy!
-
-### Other Platforms
-
-Works with any Node.js hosting:
-- Railway
-- Render
-- Heroku
-- AWS Lambda
-- Google Cloud Run
-
-## Security Notes
-
-- ✅ Never commit `.env.local` to git
-- ✅ Use environment variables for all secrets
-- ✅ Validate webhook signatures
-- ✅ Use HTTPS in production
-- ✅ Verify Stripe webhook events
-
-## Troubleshooting
-
-**CORS Errors:**
-- Check `FRONTEND_URL` in `.env.local`
-- Verify frontend URL matches exactly
-
-**Webhook Not Working:**
-- Check webhook secret is correct
-- Verify endpoint URL in Stripe Dashboard
-- Check webhook signature verification
-
-**Checkout Session Fails:**
-- Verify Stripe secret key
-- Check Price IDs are correct
-- Ensure products exist in Stripe Dashboard
-
-## Support
-
-For issues, check:
-- Stripe Dashboard logs
-- Next.js console output
-- Browser console errors
-
----
-
-Built with ❤️ for TryInterview
-# tryinterview-backend
+`npx neonctl@latest init` currently requires a newer Node runtime than the one available in this environment, and the install step also hit a network timeout here. The backend changes in this repo are ready for Neon, but the actual CLI init and package install still need a working network plus Node 22+.

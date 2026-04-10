@@ -115,7 +115,7 @@ export default async function handler(req, res) {
 
       const user = await upsertUser(userData);
 
-      console.log('✅ User profile saved to Firestore:', userId);
+      console.log('✅ User profile saved:', userId);
       return res.json({ success: true, user: serializeDoc(user) });
     } catch (error) {
       console.error('Error saving profile:', error);

@@ -4,6 +4,7 @@ export function middleware(request) {
   // Allowed origins for CORS
   const allowedOrigins = [
     'http://localhost:3000',
+    'http://localhost:3001',
     'https://tryinterview.site',
     'https://www.tryinterview.site',
   ];
@@ -18,7 +19,7 @@ export function middleware(request) {
   // Set CORS headers
   response.headers.set('Access-Control-Allow-Origin', allowOrigin || '*');
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature, X-CSRF-Token');
   response.headers.set('Access-Control-Allow-Credentials', 'true');
   response.headers.set('Access-Control-Max-Age', '86400');
 
@@ -29,7 +30,7 @@ export function middleware(request) {
       headers: {
         'Access-Control-Allow-Origin': allowOrigin || '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, stripe-signature',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, stripe-signature, X-CSRF-Token',
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Max-Age': '86400',
       },

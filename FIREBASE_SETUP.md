@@ -74,7 +74,7 @@ The app uses two collections:
   customerId: string,      // Stripe customer ID
   subscriptionId: string,  // Stripe subscription ID
   priceId: string,         // Stripe price ID
-  planName: string,        // "Starter", "Professional", "Premium", "Enterprise"
+  planName: string,        // "Free", "Starter", "Professional", "Premium"
   status: string,          // "active", "canceled", etc.
   amount: number,          // Price in dollars
   currency: string,        // "USD"

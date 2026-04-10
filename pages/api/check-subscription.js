@@ -62,7 +62,6 @@ export default async function handler(req, res) {
             if (priceId === process.env.STRIPE_PRICE_STARTER) planName = 'Starter';
             else if (priceId === process.env.STRIPE_PRICE_PROFESSIONAL) planName = 'Professional';
             else if (priceId === process.env.STRIPE_PRICE_PREMIUM) planName = 'Premium';
-            else if (priceId === process.env.STRIPE_PRICE_ENTERPRISE) planName = 'Enterprise';
 
             // Save to Firestore
             subscription = serializeDoc(await upsertSubscription({
@@ -89,7 +88,12 @@ export default async function handler(req, res) {
     }
 
     if (!subscription || subscription.status !== 'active') {
-      return res.json({ hasSubscription: false, status: 'none' });
+      return res.json({
+        hasSubscription: false,
+        status: 'free',
+        planName: 'Free',
+        trialMockInterviews: 1,
+      });
     }
 
     console.log('✅ Returning subscription:', subscription.planName, subscription.priceId);

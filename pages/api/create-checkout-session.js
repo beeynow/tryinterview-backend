@@ -61,8 +61,8 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.FRONTEND_URL || 'https://tryinterview.site'}?payment_success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL || 'https://tryinterview.site'}?payment_canceled=true`,
+      success_url: `${process.env.FRONTEND_URL || 'https://www.tryinterview.site'}?payment_success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL || 'https://www.tryinterview.site'}?payment_canceled=true`,
       client_reference_id: userId,
       metadata: {
         userId,

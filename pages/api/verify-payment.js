@@ -83,7 +83,6 @@ export default async function handler(req, res) {
       if (priceId === process.env.STRIPE_PRICE_STARTER) planName = 'Starter';
       else if (priceId === process.env.STRIPE_PRICE_PROFESSIONAL) planName = 'Professional';
       else if (priceId === process.env.STRIPE_PRICE_PREMIUM) planName = 'Premium';
-      else if (priceId === process.env.STRIPE_PRICE_ENTERPRISE) planName = 'Enterprise';
 
       subscriptionData = {
         subscriptionId: subscription.id,

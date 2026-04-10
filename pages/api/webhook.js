@@ -2,8 +2,13 @@ import Stripe from 'stripe';
 import { buffer } from 'micro';
 import {
   upsertSubscription,
-  updateSubscription
+  updateSubscription,
 } from '../../lib/firestoreHelpers.js';
+const {
+  canUsePostgresStore,
+  finalizeWebhookEvent,
+  registerWebhookEvent,
+} = require('../../lib/postgresStore');
 const subscriptionStore = require('../../lib/subscriptionStore');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -39,6 +44,20 @@ export default async function handler(req, res) {
   console.log(`\n🔔 Webhook Event: ${event.type}`);
   
   try {
+    if (canUsePostgresStore()) {
+      const shouldProcessEvent = await registerWebhookEvent({
+        provider: 'stripe',
+        externalEventId: event.id,
+        eventType: event.type,
+        payload: event.data.object,
+      });
+
+      if (!shouldProcessEvent) {
+        console.log(`ℹ️ Stripe event ${event.id} already processed, skipping duplicate delivery.`);
+        return res.json({ received: true, duplicate: true });
+      }
+    }
+
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object;
@@ -71,7 +90,6 @@ export default async function handler(req, res) {
             if (priceId === process.env.STRIPE_PRICE_STARTER) planName = 'Starter';
             else if (priceId === process.env.STRIPE_PRICE_PROFESSIONAL) planName = 'Professional';
             else if (priceId === process.env.STRIPE_PRICE_PREMIUM) planName = 'Premium';
-            else if (priceId === process.env.STRIPE_PRICE_ENTERPRISE) planName = 'Enterprise';
 
             const webhookUserId = session.client_reference_id || session.metadata?.userId;
             const saved = await upsertSubscription({
@@ -142,7 +160,6 @@ export default async function handler(req, res) {
           if (updPriceId === process.env.STRIPE_PRICE_STARTER) updPlanName = 'Starter';
           else if (updPriceId === process.env.STRIPE_PRICE_PROFESSIONAL) updPlanName = 'Professional';
           else if (updPriceId === process.env.STRIPE_PRICE_PREMIUM) updPlanName = 'Premium';
-          else if (updPriceId === process.env.STRIPE_PRICE_ENTERPRISE) updPlanName = 'Enterprise';
 
           await updateSubscription(updatedSubscription.id, {
             status: updatedSubscription.status,
@@ -246,9 +263,27 @@ export default async function handler(req, res) {
     
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
+    if (canUsePostgresStore()) {
+      await finalizeWebhookEvent({
+        provider: 'stripe',
+        externalEventId: event.id,
+        status: 'processed',
+      });
+    }
+
     return res.json({ received: true });
   } catch (error) {
     console.error('Error processing webhook:', error);
+
+    if (canUsePostgresStore()) {
+      await finalizeWebhookEvent({
+        provider: 'stripe',
+        externalEventId: event.id,
+        status: 'failed',
+        errorMessage: error.message,
+      });
+    }
+
     return res.status(500).json({ error: 'Webhook processing failed' });
   }
 }
