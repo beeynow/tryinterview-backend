@@ -5,12 +5,12 @@ Production-oriented Next.js API for TryInterview with:
 - Firebase auth verification
 - Secure server session cookies
 - Stripe billing and webhook handling
-- Neon/PostgreSQL schema and migrations
-- Fallback compatibility with the existing Firestore-backed flow while the database is being rolled out
+- Neon/PostgreSQL schema, bootstrap, and migration scripts
+- Postgres as the authoritative application data store when `REQUIRE_DATABASE=true`
 
 ## Database foundation
 
-The backend now includes a normalized Neon/PostgreSQL schema for:
+The backend includes a normalized Neon/PostgreSQL schema for:
 
 - users and profile data
 - secure auth sessions
@@ -21,23 +21,38 @@ The backend now includes a normalized Neon/PostgreSQL schema for:
 - achievements, certificates, and progress snapshots
 - user settings
 
-Migration files live in [`db/migrations/001_platform_foundation.sql`](/home/muhammad/Tryinterview/tryinterview-backend/db/migrations/001_platform_foundation.sql).
+Migration files live in `db/migrations/`.
 
 ## Environment
 
-Copy [`.env.example`](/home/muhammad/Tryinterview/tryinterview-backend/.env.example) to `.env.local` and configure:
+Copy `.env.example` to `.env.local` and configure:
 
 - `DATABASE_URL` for Neon/Postgres
+- `REQUIRE_DATABASE=true` to disable silent fallback writes in production
 - Stripe secrets and price IDs
 - Firebase Admin credentials
 - frontend URL and cookie settings
 
-## Migrations
+`.env.local` is gitignored and is the right place for production-grade local secrets.
 
-When network access is available and dependencies are installed:
+## Database setup
+
+Install dependencies and verify the database connection:
 
 ```bash
 npm install
+npm run db:check
+```
+
+Apply migrations and seed the question bank reference data:
+
+```bash
+npm run db:setup
+```
+
+If you only want to apply schema migrations:
+
+```bash
 npm run db:migrate
 ```
 
@@ -48,7 +63,7 @@ The backend supports two auth paths:
 1. Firebase bearer tokens for existing frontend API calls.
 2. Firebase session cookies plus an app session cookie for hardened browser sessions.
 
-New session endpoints:
+Session endpoints:
 
 - `GET /api/auth/session/csrf`
 - `POST /api/auth/session/login`
@@ -57,8 +72,4 @@ New session endpoints:
 
 ## Stripe hardening
 
-Stripe webhooks now record event IDs in the database so duplicate deliveries do not double-apply subscription state.
-
-## Neon CLI note
-
-`npx neonctl@latest init` currently requires a newer Node runtime than the one available in this environment, and the install step also hit a network timeout here. The backend changes in this repo are ready for Neon, but the actual CLI init and package install still need a working network plus Node 22+.
+Stripe webhooks record event IDs in the database to prevent duplicate application of subscription changes, and subscription/customer state is persisted to the database rather than in-memory process state.

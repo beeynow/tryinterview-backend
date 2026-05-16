@@ -1,15 +1,19 @@
 import Stripe from 'stripe';
 import { buffer } from 'micro';
-import {
+const {
   upsertSubscription,
   updateSubscription,
-} from '../../lib/firestoreHelpers.js';
+  updateUserCustomerId,
+} = require('../../lib/firestoreHelpers');
 const {
   canUsePostgresStore,
   finalizeWebhookEvent,
   registerWebhookEvent,
 } = require('../../lib/postgresStore');
-const subscriptionStore = require('../../lib/subscriptionStore');
+const {
+  buildSubscriptionRecord,
+  getCheckoutUserId,
+} = require('../../lib/stripeBilling');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-11-20.acacia',
@@ -64,52 +68,41 @@ export default async function handler(req, res) {
         console.log('✅ Checkout session completed:', session.id);
         console.log('   Customer:', session.customer);
         console.log('   Subscription:', session.subscription);
-        
-        // Save customer info
-        if (session.customer) {
-          subscriptionStore.saveCustomer(session.customer, {
-            email: session.customer_email,
-            userId: session.metadata?.userId,
-            name: session.customer_details?.name,
-            subscriptionId: session.subscription,
-            status: 'active',
-            createdAt: new Date().toISOString()
-          });
-          console.log('   💾 Customer saved to store');
-        }
-
-        // Save to Firestore
         try {
-          if (session.subscription) {
-            const subscription = await stripe.subscriptions.retrieve(session.subscription, {
-              expand: ['items.data.price']
-            });
-            
-            const priceId = subscription.items.data[0]?.price.id;
-            let planName = 'Unknown Plan';
-            if (priceId === process.env.STRIPE_PRICE_STARTER) planName = 'Starter';
-            else if (priceId === process.env.STRIPE_PRICE_PROFESSIONAL) planName = 'Professional';
-            else if (priceId === process.env.STRIPE_PRICE_PREMIUM) planName = 'Premium';
+          const webhookUserId = getCheckoutUserId(session);
 
-            const webhookUserId = session.client_reference_id || session.metadata?.userId;
-            const saved = await upsertSubscription({
-              userId: webhookUserId,
-              customerId: session.customer,
-              subscriptionId: subscription.id,
-              priceId: priceId,
-              planName: planName,
-              status: subscription.status,
-              amount: subscription.items.data[0]?.price.unit_amount / 100,
-              currency: subscription.items.data[0]?.price.currency?.toUpperCase(),
-              interval: subscription.items.data[0]?.price.recurring?.interval,
-              currentPeriodStart: new Date(subscription.current_period_start * 1000),
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-              cancelAtPeriodEnd: subscription.cancel_at_period_end
-            });
-            console.log('   💾 Subscription saved to Firestore:', planName, '| userId:', webhookUserId, '| Doc ID:', saved?.id);
+          if (webhookUserId && session.customer) {
+            await updateUserCustomerId(webhookUserId, session.customer);
+            console.log('   💾 Customer linked to user in database');
           }
-        } catch (firestoreError) {
-          console.error('Firestore save error:', firestoreError.message);
+
+          if (!session.subscription || !webhookUserId) {
+            if (!webhookUserId) {
+              console.warn('   ⚠️ Missing userId on checkout session metadata; subscription sync skipped.');
+            }
+            break;
+          }
+
+          const subscription = await stripe.subscriptions.retrieve(session.subscription, {
+            expand: ['items.data.price'],
+          });
+          const saved = await upsertSubscription(buildSubscriptionRecord({
+            subscription,
+            userId: webhookUserId,
+            customerId: session.customer,
+            rawPayload: subscription,
+          }));
+
+          console.log(
+            '   💾 Subscription saved to database:',
+            saved?.planName,
+            '| userId:',
+            webhookUserId,
+            '| Record ID:',
+            saved?.id
+          );
+        } catch (databaseError) {
+          console.error('Database sync error:', databaseError.message);
         }
         break;
 
@@ -119,18 +112,29 @@ export default async function handler(req, res) {
         console.log('   Customer:', subscription.customer);
         console.log('   Status:', subscription.status);
         console.log('   Plan:', subscription.items.data[0]?.price.id);
-        
-        // Save subscription
-        subscriptionStore.saveSubscription(subscription.id, {
-          customerId: subscription.customer,
-          status: subscription.status,
-          priceId: subscription.items.data[0]?.price.id,
-          currentPeriodStart: new Date(subscription.current_period_start * 1000).toISOString(),
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-          cancelAtPeriodEnd: subscription.cancel_at_period_end,
-          createdAt: new Date().toISOString()
-        });
-        console.log('   💾 Subscription saved to store');
+
+        try {
+          const subscriptionUserId = subscription.metadata?.userId || null;
+
+          if (!subscriptionUserId) {
+            console.warn('   ⚠️ Subscription metadata is missing userId; database sync skipped.');
+            break;
+          }
+
+          await upsertSubscription(buildSubscriptionRecord({
+            subscription,
+            userId: subscriptionUserId,
+            rawPayload: subscription,
+          }));
+
+          if (subscription.customer) {
+            await updateUserCustomerId(subscriptionUserId, subscription.customer);
+          }
+
+          console.log('   💾 Subscription saved to database');
+        } catch (databaseError) {
+          console.error('Database sync error:', databaseError.message);
+        }
         break;
 
       case 'customer.subscription.updated':
@@ -139,42 +143,25 @@ export default async function handler(req, res) {
         console.log('   New status:', updatedSubscription.status);
         console.log('   Cancel at period end:', updatedSubscription.cancel_at_period_end);
 
-        // Update in-memory store
-        const existingSub = subscriptionStore.getSubscription(updatedSubscription.id);
-        if (existingSub) {
-          subscriptionStore.saveSubscription(updatedSubscription.id, {
-            ...existingSub,
-            status: updatedSubscription.status,
-            priceId: updatedSubscription.items.data[0]?.price.id,
-            currentPeriodStart: new Date(updatedSubscription.current_period_start * 1000).toISOString(),
-            currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000).toISOString(),
-            cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end
-          });
-          console.log('   💾 Subscription updated in store');
-        }
-
-        // Update Firestore
         try {
-          const updPriceId = updatedSubscription.items.data[0]?.price.id;
-          let updPlanName = 'Unknown Plan';
-          if (updPriceId === process.env.STRIPE_PRICE_STARTER) updPlanName = 'Starter';
-          else if (updPriceId === process.env.STRIPE_PRICE_PROFESSIONAL) updPlanName = 'Professional';
-          else if (updPriceId === process.env.STRIPE_PRICE_PREMIUM) updPlanName = 'Premium';
-
-          await updateSubscription(updatedSubscription.id, {
-            status: updatedSubscription.status,
-            priceId: updPriceId,
-            planName: updPlanName,
-            amount: updatedSubscription.items.data[0]?.price.unit_amount / 100,
-            currency: updatedSubscription.items.data[0]?.price.currency?.toUpperCase(),
-            interval: updatedSubscription.items.data[0]?.price.recurring?.interval,
-            currentPeriodStart: new Date(updatedSubscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
-            cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end
+          const updateData = buildSubscriptionRecord({
+            subscription: updatedSubscription,
+            userId: updatedSubscription.metadata?.userId || null,
+            rawPayload: updatedSubscription,
           });
-          console.log('   💾 Subscription updated in Firestore:', updPlanName, updatedSubscription.status);
-        } catch (firestoreError) {
-          console.error('Firestore update error:', firestoreError.message);
+
+          const updatedRecord = await updateSubscription(updatedSubscription.id, updateData);
+          if (!updatedRecord && updateData.userId) {
+            await upsertSubscription(updateData);
+          }
+
+          if (updateData.userId && updatedSubscription.customer) {
+            await updateUserCustomerId(updateData.userId, updatedSubscription.customer);
+          }
+
+          console.log('   💾 Subscription updated in database');
+        } catch (databaseError) {
+          console.error('Database update error:', databaseError.message);
         }
         break;
 
@@ -183,26 +170,23 @@ export default async function handler(req, res) {
         console.log('❌ Subscription deleted:', deletedSubscription.id);
         console.log('   Customer:', deletedSubscription.customer);
 
-        // Update in-memory store
-        const deletedSub = subscriptionStore.getSubscription(deletedSubscription.id);
-        if (deletedSub) {
-          subscriptionStore.saveSubscription(deletedSubscription.id, {
-            ...deletedSub,
-            status: 'canceled',
-            canceledAt: new Date().toISOString()
-          });
-          console.log('   💾 Subscription marked as canceled in store');
-        }
-
-        // Update Firestore
         try {
-          await updateSubscription(deletedSubscription.id, {
-            status: 'canceled',
-            canceledAt: new Date()
+          const cancelData = buildSubscriptionRecord({
+            subscription: deletedSubscription,
+            userId: deletedSubscription.metadata?.userId || null,
+            rawPayload: deletedSubscription,
           });
-          console.log('   💾 Subscription marked as canceled in Firestore');
-        } catch (firestoreError) {
-          console.error('Firestore cancel error:', firestoreError.message);
+          cancelData.status = 'canceled';
+          cancelData.canceledAt = cancelData.canceledAt || new Date();
+
+          const deletedRecord = await updateSubscription(deletedSubscription.id, cancelData);
+          if (!deletedRecord && cancelData.userId) {
+            await upsertSubscription(cancelData);
+          }
+
+          console.log('   💾 Subscription marked as canceled in database');
+        } catch (databaseError) {
+          console.error('Database cancel error:', databaseError.message);
         }
         break;
 

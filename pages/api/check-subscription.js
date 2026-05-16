@@ -6,6 +6,10 @@ const {
   serializeDoc,
 } = require('../../lib/firestoreHelpers');
 const { createCors, runMiddleware, requireAuth } = require('../../lib/apiUtils');
+const {
+  buildSubscriptionRecord,
+  getPlanNameFromPriceId,
+} = require('../../lib/stripeBilling');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-11-20.acacia',
@@ -26,7 +30,7 @@ export default async function handler(req, res) {
   try {
     console.log('🔍 Checking subscription for userId:', userId);
 
-    // Find active subscription in Firestore
+    // Find active subscription in the database
     let subscription = serializeDoc(await findActiveSubscription(userId));
     const user = serializeDoc(await findUserById(userId));
 
@@ -57,29 +61,16 @@ export default async function handler(req, res) {
           if (subscriptions.data.length > 0) {
             const stripeSub = subscriptions.data[0];
             const priceId = stripeSub.items.data[0]?.price.id;
+            const planName = getPlanNameFromPriceId(priceId);
 
-            let planName = 'Unknown Plan';
-            if (priceId === process.env.STRIPE_PRICE_STARTER) planName = 'Starter';
-            else if (priceId === process.env.STRIPE_PRICE_PROFESSIONAL) planName = 'Professional';
-            else if (priceId === process.env.STRIPE_PRICE_PREMIUM) planName = 'Premium';
-
-            // Save to Firestore
-            subscription = serializeDoc(await upsertSubscription({
+            subscription = serializeDoc(await upsertSubscription(buildSubscriptionRecord({
+              subscription: stripeSub,
               userId,
               customerId: customer.id,
-              subscriptionId: stripeSub.id,
-              priceId,
-              planName,
-              status: 'active',
-              amount: stripeSub.items.data[0]?.price.unit_amount / 100,
-              currency: stripeSub.items.data[0]?.price.currency?.toUpperCase(),
-              interval: stripeSub.items.data[0]?.price.recurring?.interval,
-              currentPeriodStart: new Date(stripeSub.current_period_start * 1000),
-              currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
-              cancelAtPeriodEnd: stripeSub.cancel_at_period_end
-            }));
+              rawPayload: stripeSub,
+            })));
 
-            console.log('✅ Subscription synced from Stripe to Firestore:', planName);
+            console.log('✅ Subscription synced from Stripe to database:', planName);
           }
         }
       } catch (stripeError) {

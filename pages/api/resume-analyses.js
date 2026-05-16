@@ -1,8 +1,11 @@
 const {
   createCors,
+  enforceRouteRateLimit,
   getIdentityFromToken,
   requireAuth,
+  requireJsonRequest,
   runMiddleware,
+  setApiSecurityHeaders,
 } = require('../../lib/apiUtils');
 const {
   analyzeResumeSubmission,
@@ -20,9 +23,14 @@ const cors = createCors(['GET', 'POST', 'OPTIONS']);
 
 export default async function handler(req, res) {
   await runMiddleware(req, res, cors);
+  setApiSecurityHeaders(res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  if (!requireJsonRequest(req, res)) {
+    return;
   }
 
   const authUser = await requireAuth(req, res);
@@ -31,6 +39,15 @@ export default async function handler(req, res) {
   }
 
   const identity = getIdentityFromToken(authUser);
+
+  if (!enforceRouteRateLimit(req, res, {
+    scope: `resume-analyses:${req.method.toLowerCase()}`,
+    limit: req.method === 'GET' ? 20 : 8,
+    windowMs: 60000,
+    identifier: identity.userId,
+  })) {
+    return;
+  }
 
   if (req.method === 'GET') {
     try {

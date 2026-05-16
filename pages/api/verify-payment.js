@@ -5,6 +5,9 @@ const {
   upsertSubscription,
   updateUserCustomerId
 } = require('../../lib/firestoreHelpers');
+const {
+  buildSubscriptionRecord,
+} = require('../../lib/stripeBilling');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-11-20.acacia',
@@ -51,7 +54,6 @@ export default async function handler(req, res) {
         ? await stripe.subscriptions.retrieve(session.subscription)
         : session.subscription;
 
-      const priceId = subscription.items.data[0]?.price.id;
       const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
       const userIdFromSession =
         session.client_reference_id ||
@@ -79,52 +81,31 @@ export default async function handler(req, res) {
 
       const trustedUserId = userIdFromSession || authUser.uid;
 
-      let planName = 'Unknown Plan';
-      if (priceId === process.env.STRIPE_PRICE_STARTER) planName = 'Starter';
-      else if (priceId === process.env.STRIPE_PRICE_PROFESSIONAL) planName = 'Professional';
-      else if (priceId === process.env.STRIPE_PRICE_PREMIUM) planName = 'Premium';
+      const normalizedSubscription = buildSubscriptionRecord({
+        subscription,
+        userId: trustedUserId,
+        customerId,
+        rawPayload: subscription,
+      });
 
       subscriptionData = {
-        subscriptionId: subscription.id,
-        customerId,
-        userId: trustedUserId,
-        status: subscription.status,
-        priceId,
-        planName,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000).toISOString(),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        amount: subscription.items.data[0]?.price.unit_amount / 100,
-        currency: subscription.items.data[0]?.price.currency?.toUpperCase(),
-        interval: subscription.items.data[0]?.price.recurring?.interval,
+        ...normalizedSubscription,
+        currentPeriodStart: normalizedSubscription.currentPeriodStart?.toISOString() || null,
+        currentPeriodEnd: normalizedSubscription.currentPeriodEnd?.toISOString() || null,
+        canceledAt: normalizedSubscription.canceledAt?.toISOString() || null,
       };
 
       if (trustedUserId) {
         // Cancel any previous active subscriptions for this user
         await cancelOtherSubscriptions(trustedUserId, subscription.id);
 
-        // Upsert new subscription to Firestore
-        const savedSub = await upsertSubscription({
-          userId: trustedUserId,
-          customerId,
-          subscriptionId: subscription.id,
-          priceId,
-          planName,
-          status: subscription.status,
-          amount: subscription.items.data[0]?.price.unit_amount / 100,
-          currency: subscription.items.data[0]?.price.currency?.toUpperCase(),
-          interval: subscription.items.data[0]?.price.recurring?.interval,
-          currentPeriodStart: new Date(subscription.current_period_start * 1000),
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-          cancelAtPeriodEnd: subscription.cancel_at_period_end
-        });
+        const savedSub = await upsertSubscription(normalizedSubscription);
 
-        console.log('✅ Subscription saved to Firestore:', planName, 'for user:', trustedUserId, '| Doc ID:', savedSub?.id);
+        console.log('✅ Subscription saved to database:', normalizedSubscription.planName, 'for user:', trustedUserId, '| Record ID:', savedSub?.id);
 
-        // Update user's stripeCustomerId
         await updateUserCustomerId(trustedUserId, customerId);
       } else {
-        console.warn('⚠️ No userId found — subscription NOT saved to Firestore. session.client_reference_id:', session.client_reference_id);
+        console.warn('⚠️ No userId found — subscription NOT saved to database. session.client_reference_id:', session.client_reference_id);
       }
     }
 

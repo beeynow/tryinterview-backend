@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start -p 3002",
     "lint": "next lint",
-    "db:migrate": "node scripts/run-migrations.js"
+    "db:check": "node scripts/check-db.js",
+    "db:migrate": "node scripts/run-migrations.js",
+    "db:setup": "node scripts/setup-db.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

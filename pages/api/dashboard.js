@@ -1,8 +1,10 @@
 const {
   createCors,
+  enforceRouteRateLimit,
   getIdentityFromToken,
   requireAuth,
   runMiddleware,
+  setApiSecurityHeaders,
 } = require('../../lib/apiUtils');
 const {
   getDashboardSnapshot,
@@ -12,6 +14,7 @@ const cors = createCors(['GET', 'OPTIONS']);
 
 export default async function handler(req, res) {
   await runMiddleware(req, res, cors);
+  setApiSecurityHeaders(res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -28,6 +31,14 @@ export default async function handler(req, res) {
 
   try {
     const identity = getIdentityFromToken(authUser);
+    if (!enforceRouteRateLimit(req, res, {
+      scope: 'dashboard:get',
+      limit: 30,
+      windowMs: 60000,
+      identifier: identity.userId,
+    })) {
+      return;
+    }
     const dashboard = await getDashboardSnapshot(identity.userId, identity);
 
     return res.status(200).json(dashboard);
