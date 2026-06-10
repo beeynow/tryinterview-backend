@@ -7,6 +7,8 @@ export function middleware(request) {
     'http://localhost:3001',
     'https://tryinterview.site',
     'https://www.tryinterview.site',
+    'https://tryinterviews.site',
+    'https://www.tryinterviews.site',
   ];
 
   const origin = request.headers.get('origin');
