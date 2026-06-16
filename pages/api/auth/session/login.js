@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       throw new Error('Firebase Admin is not initialized');
     }
 
-    const decodedToken = await admin.auth().verifyIdToken(idToken, true);
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
     const session = await createServerSession({
       req,
       res,
